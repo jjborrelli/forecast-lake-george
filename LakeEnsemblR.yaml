@@ -1,0 +1,122 @@
+location:
+   name: LakeGeorge                                 # station name used in output [default=GOTM site]
+   latitude: 43.5548                                  # latitude [degrees North; min=-90.0; max=90.0; default=0.0]
+   longitude: -73.62793                             # longitude [degrees East; min=-360.0; max=360.0; default=0.0]
+   elevation: 398.7                                # elevation of lake surface above sea level [m]
+   depth: 60                                     # maximum water depth [m; min=0.0; default=100.0]
+   hypsograph: drivers/LakeEnsemblR_bathymetry_standard.csv      # hypsograph [default=]
+   init_depth: 60                                # initial height of lake surface relative to the bottom [m]
+time:
+   start: 2022-05-25 01:00:00 # start date and time [yyyy-mm-dd HH:MM:SS; default=2017-01-01 00:00:00]
+   stop: 2022-06-08 23:00:00 # stop date and time [yyyy-mm-dd HH:MM:SS; default=2018-01-01 00:00:00]
+   time_step: 3600.0                             # time step for integration [s; min=0.0; default=3600.0]
+config_files:
+   GOTM: GOTM/gotm.yaml                          # GOTM config file (yaml format)
+   GLM: GLM/glm3.nml                             # GLM config file (nml format)
+   Simstrat: Simstrat/simstrat.par               # Simstrat config file (json format)
+   FLake: FLake/flake.nml                        # FLake config file (nml format)
+   MyLake: MyLake/mylake.Rdata                   # MyLake config file (Rdata format)
+observations:
+   temperature:
+      file: calibration/LakeEnsemblR_wtemp_profile_standard.csv      # file with observed water temperature profiles, with column headers according to LakeEnsemblR vocabulary [if none use NULL]
+   ice_height:
+      file: NULL                                 # file with observed ice height, with column headers according to LakeEnsemblR vocabulary [if none use NULL]
+input:
+   init_temp_profile:
+      file: drivers/initial_4fc.csv    # initial temperature profile. CSV file or empty. If empty, the observations file will be used.
+   meteo:
+      file: drivers/met_files/LakeEnsemblr_meteo_gefs_ens1.csv # file with meteorological forcing data, with column headers according to LakeEnsemblR vocabulary
+   light:
+      Kw: 0.25                                    # light extinction coefficient [m-1 or csv file]
+   ice:
+      use: false                                  # turn on ice models? [default=true]
+inflows:
+   use: false                                     # use in- and outflows? [true/false]
+   file: NULL        # file with inflow data, with column headers according to LakeEnsemblR vocabulary [csv file; must be provided if inflows -> use is true]
+   number_inflows: 0                             # number of inflows in the inflow file
+outflows:
+   use: false                                    # use outflows? [true/false]
+   file: NULL        # file with outflow data, with column headers according to LakeEnsemblR vocabulary [csv file; must be provided if outflows -> use is true]
+   number_outflows: 0                            # number of outflows in the outflow file
+   outflow_lvl: -1               
+output:
+   file: temp_fc_1 # path of output file, excluding extension
+   format: netcdf                                # format [text, netcdf; default=netcdf]
+   depths: 0.5                                   # depths to extract output [m; default=0.5]
+   compression: 4                                # Set to an integer between 1 (least compression) and 9 (most compression), this enables compression for the variable as it is written to the file [default = 4].
+   time_unit: hour                               # time unit [second, hour, day, dt=model time step; default=day]
+   time_step: 1                                 # number of time units between output [min=1; default=1]
+   time_method: mean                             # treatment of time dimension [point=instantaneous, mean, integrated; default=point]
+   variables:
+      - temp
+      - ice_height
+scaling_factors:                                 # scaling factors to apply to meteorological input, either for all models or model-specific. If not specified, no scaling is applied. If both "all" and model-specific are specified for a certain model, only the model-specific scaling is applied.
+   Simstrat:
+      wind_speed: 0.85031
+      swr: 0.80906
+   GOTM:
+      wind_speed: 0.78763
+      swr: 0.69146
+   GLM:
+      wind_speed: 0.60472
+      swr: 0.88337
+   FLake:
+      wind_speed: 1.9668
+      swr: 1.0086
+model_parameters:
+   FLake:                                        # FLake specific parameters
+      fetch_lk: 10000.0 
+      c_relax_C: 0.0072859
+   GLM:                                          # GLM specific parameters
+      bsn_len: 51800                              # length of the lake basin, at crest height [m]
+      bsn_wid: 3200                              # width of the lake basin, at crest height [m]
+      mixing/coef_mix_hyp: 0.93366
+   GOTM:                                         # GOTM specific parameters
+    #  k_min: 3.6E-6                              # minimum turbulent kinetic energy [m^2/s^2; min=0.0]
+      turb_param/k_min: 5.9446e-06
+   Simstrat:                                     # Simstrat specific parameters
+      a_seiche: 0.0019808
+   MyLake:                                       # MyLake specific parameters
+      Phys.par/C_shelter: 0.15                   # wind sheltering coefficient [min=0; max=1; if not specified, C_shelter=1.0-exp(-0.3*surface_area)]
+calibration:                                     # calibration section
+   met:                                          # meteo scaling parameter
+      wind_speed:                                # wind speed scaling
+         lower: 0.5                              # lower bound for wind speed scaling
+         upper: 2                                # upper bound for wind speed scaling
+         initial: 1                              # initial value for wind speed scaling
+         log: false                              # log transform scaling factor
+      swr:                                       # shortwave radiation scaling
+         lower: 0.5                              # lower bound for shortwave radiation scaling
+         upper: 1.5                              # upper bound for shortwave radiation scaling
+         initial: 1                              # initial value for shortwave radiation scaling
+         log: false                              # log transform scaling factor
+   Simstrat:                                     # Simstrat specific parameters
+      a_seiche:
+         lower: 0.0008                           # lower bound for parameter
+         upper: 0.003                            # upper bound for parameter
+         initial: 0.001                          # initial value for parameter
+         log: false                              # log transform scaling factor
+   MyLake:                                       # MyLake specific parameters
+      Phys.par/C_shelter:
+         lower: 0.14                             # lower bound for parameter
+         upper: 0.16                             # upper bound for parameter
+         initial: 0.15                           # initial value for parameter
+         log: false                              # log transform scaling factor
+   GOTM:                                         # GOTM specific parameters
+      turb_param/k_min:
+         lower: 5E-6                             # lower bound for parameter
+         upper: 5E-4                             # upper bound for parameter
+         initial: 1E-5                           # initial value for parameter
+         log: true
+   GLM:                                          # GLM specific parameters
+      mixing/coef_mix_hyp:
+         lower: 0.1                              # lower bound for parameter
+         upper: 2                                # upper bound for parameter
+         initial: 1                              # initial value for parameter
+         log: false                              # log transform scaling factor
+   FLake:                                        # FLake specific parameters
+      c_relax_C:
+         lower: 0.0001                           # lower bound for parameter
+         upper: 0.01                             # upper bound for parameter
+         initial: 0.003                          # initial value for parameter
+         log: false                              # log transform scaling factor
