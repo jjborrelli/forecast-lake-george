@@ -81,3 +81,52 @@ for(i in 1:length(ens_sp)){
             row.names = FALSE)
 }
 
+
+# I know it is bad to setwd but it is the easiest way I could think of to make everything work when automating
+setwd("C:/Users/borre/Documents/lg-forecast")
+
+
+ler_yaml <- "LakeEnsemblR.yaml"
+# SET START AND END TIMES FOR LAKE ENSEMBLE
+input_yaml_multiple(file = ler_yaml, 
+                    paste(initial_fc_date, "01:00:00"), key1 = "time", key2 = "start")
+input_yaml_multiple(file = ler_yaml, 
+                    paste(ymd(initial_fc_date) + 14, "23:00:00"), key1 = "time", key2 = "stop")
+
+config_file <- ler_yaml
+model <- c("FLake", "GLM", "GOTM", "Simstrat")
+
+cat("\n\n ######################################## \n\n starting ensemble loop \n\n ######################################## \n\n")
+
+# RUN LakeEnsemblR FOR EACH ENSEMBLE MEMBER FORECAST
+t0_ens <- Sys.time()
+for(i in 1:31){
+  outfile <- paste0("temp_fc_", i)
+  metfile <- paste0("drivers/met_files/LakeEnsemblr_meteo_gefs_ens", i, ".csv")
+  input_yaml_multiple(file = ler_yaml, metfile, key1 = "meteo", key2 = "file")
+  input_yaml_multiple(file = ler_yaml, outfile, key1 = "output", key2 = "file")
+  
+  export_config(config_file = config_file, model = model)
+  
+  # 2. Run ensemble lake models
+  run_ensemble(config_file = config_file, model = model, parallel = TRUE)
+}
+t1_ens <- Sys.time()
+t1_ens - t0_ens
+
+
+# LOAD IN PREDICTED LAKE TEMPERATURES
+olf <- list.files("C:/Users/borre/Documents/lg-forecast/output/")
+laketemps <- list()
+for(i in 1:length(olf)){
+  wtemp <- load_var(ncdf = paste0("C:/Users/borre/Documents/lg-forecast/output/", 
+                                  olf[i]), var = 'temp', return = "array")
+  
+  laketemps[[i]] <- (reshape2::melt(wtemp)) %>% filter(!is.na(value)) %>% mutate(ens = i)
+}
+laketemps <- data.table::rbindlist(laketemps)
+
+# SAVE LAKE TEMPERATURES
+data.table::fwrite(laketemps, paste0("C:/Users/borre/Documents/lg-forecast/temp_forecasts/fc_", initial_fc_date, ".csv"))
+
+
