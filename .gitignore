@@ -37,3 +37,14 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# folders
+drivers/gefs
+drivers/gefs_ds
+drivers/met_archive
+drivers/met_files
+Flake/
+GLM/
+GOTM/
+Simstrat/
+
