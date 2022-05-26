@@ -31,7 +31,7 @@ noaa_gefs_point_download_downscale(
 
 
 # LOAD DATA BACK INTO R
-folder <- paste0(here::here("drivers"), "/DFWI/", initial_fc_date, "/00/")
+folder <- paste0(here::here("drivers"), "/gefs_ds/DFWI/", initial_fc_date, "/00/")
 lf <- list.files(folder)
 
 
@@ -68,7 +68,7 @@ ens_meteo <- do.call(rbind, df) %>%
   filter(ymd_hms(datetime) <= (ymd_hms(paste(initial_fc_date, "00:00:00"))+days(15)))
 
 # ARCHIVE MET PREDICTION DATA
-metpredpath <- paste0("C:/Users/borre/Documents/lg-forecast/drivers/met_archive/meteo_fc_", initial_fc_date, ".csv")
+metpredpath <- paste0(here::here("drivers"), "/met_archive/meteo_fc_", initial_fc_date, ".csv")
 data.table::fwrite(ens_meteo, metpredpath)
 
 # SPLIT ENSEMBLES
@@ -77,7 +77,7 @@ ens_sp <- split(ens_meteo, ens_meteo$ens)
 # SAVE EACH ENSEMBLE FOR LakeEnsemblR
 for(i in 1:length(ens_sp)){
   write.csv(dplyr::select(ens_sp[[i]], -ens, -spechum),
-            paste0("C:/Users/borre/Documents/lg-forecast/drivers/met_files/LakeEnsemblr_meteo_gefs_ens", i, ".csv"),
+            paste0(here::here("drivers"),"/met_files/LakeEnsemblr_meteo_gefs_ens", i, ".csv"),
             row.names = FALSE)
 }
 
@@ -116,10 +116,10 @@ t1_ens - t0_ens
 
 
 # LOAD IN PREDICTED LAKE TEMPERATURES
-olf <- list.files("C:/Users/borre/Documents/lg-forecast/output/")
+olf <- list.files(paste0(here::here(), "/output/"))
 laketemps <- list()
 for(i in 1:length(olf)){
-  wtemp <- load_var(ncdf = paste0("C:/Users/borre/Documents/lg-forecast/output/", 
+  wtemp <- load_var(ncdf = paste0(here::here(), "/output/", 
                                   olf[i]), var = 'temp', return = "array")
   
   laketemps[[i]] <- (reshape2::melt(wtemp)) %>% filter(!is.na(value)) %>% mutate(ens = i)
@@ -127,6 +127,6 @@ for(i in 1:length(olf)){
 laketemps <- data.table::rbindlist(laketemps)
 
 # SAVE LAKE TEMPERATURES
-data.table::fwrite(laketemps, paste0("C:/Users/borre/Documents/lg-forecast/temp_forecasts/fc_", initial_fc_date, ".csv"))
+data.table::fwrite(laketemps, paste0(here::here(), "/temp_forecasts/fc_", initial_fc_date, ".csv"))
 
 
