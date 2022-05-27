@@ -1,0 +1,355 @@
+---
+title: "Lake George Forecast"
+date: "`r Sys.Date()`"
+output:  
+  bookdown::pdf_document2:
+    toc: false
+    number_sections: false
+    includes:  
+      in_header: my_header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	comment = NA
+)
+```
+
+
+```{r}
+library(Rnoaa4cast)
+#library(LakeEnsemblR)
+library(gotmtools)
+library(rLakeAnalyzer)
+
+library(ncdf4)
+
+library(lubridate)
+library(dplyr)
+library(tidyr)
+
+library(ggplot2)
+library(patchwork)
+```
+
+```{r}
+initial_fc_date <- Sys.Date()
+```
+
+```{r}
+qfun <- function(x, p = c(0.25, 0.75)){
+  return(data.frame(ymin = quantile(x, probs = p[1]), 
+                    y = median(x), 
+                    ymax = quantile(x, probs = p[2])))
+}
+```
+
+
+# Meteorological 
+
+## Wind
+
+```{r}
+metpath <- paste0("C:/Users/borre/Documents/lg-forecast/drivers/met_archive/meteo_fc_", 
+                  initial_fc_date, ".csv")
+ens_meteo <- data.table::fread(metpath)
+```
+
+
+```{r, fig.cap = "Wind speed at 10m, light gray shaded area is the middle 80% of predicted values, while dark shaded area is middle 50%. Red line indicates high wind (6 m/s) and blue line indicates low wind (3 m /s)", fig.height = 4}
+ens_meteo %>% 
+  gather(var, value, Air_Temperature_celsius:Ten_Meter_Elevation_Wind_Speed_meterPerSecond,
+         Snowfall_millimeterPerHour) %>% 
+  filter(var == "Ten_Meter_Elevation_Wind_Speed_meterPerSecond") %>% 
+  ggplot(aes(x = datetime, y = value)) + 
+  # geom_line(aes(group = ens), size = 0.7, alpha = 0.7) + 
+  # stat_summary(fun.data = mean_se,geom = "ribbon", fill = "green3") + 
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)), geom = "ribbon", fill = "gray70") +
+  stat_summary(fun.data = qfun, geom = "ribbon", fill = "gray40") + 
+  stat_summary(fun.data = qfun, geom = "line", size = 1.2) + 
+  geom_hline(yintercept = 6, color = "red", size = 1.2) + 
+  geom_hline(yintercept = 3, color = "blue", size = 1.2) +
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "2 days"), 
+                   date_labels = "%m/%d") + 
+  labs(x = "Datetime (hours)", y = "Wind Speed (m/s)") + 
+  theme_bw(base_size = 14)
+```
+
+
+
+## Air Temperature  
+
+```{r, fig.cap = "Air temperature, light gray shaded area is the middle 80% of predicted values, while dark shaded area is middle 50%.", fig.height = 4}
+ens_meteo %>% 
+  gather(var, value, Air_Temperature_celsius:Ten_Meter_Elevation_Wind_Speed_meterPerSecond,
+         Snowfall_millimeterPerHour) %>% 
+  filter(var == "Air_Temperature_celsius") %>% 
+  ggplot(aes(x = datetime, y = value * 0.45)) + 
+  # geom_line(aes(group = ens), size = 0.7, alpha = 0.7) + 
+  # stat_summary(fun.data = mean_se,geom = "ribbon", fill = "green3") + 
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)), geom = "ribbon", fill = "gray70") +
+  stat_summary(fun.data = qfun, geom = "ribbon", fill = "gray40") + 
+  stat_summary(fun.data = qfun, geom = "line", size = 1.2) + 
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "2 days"), 
+                   date_labels = "%m/%d") + 
+  labs(x = "Datetime (hours)", y = "Air Temperature (°C)") + 
+  theme_bw(base_size = 14)
+```
+
+## Light  
+
+```{r, fig.cap = "Photosynthetically active radiation, defined as 0.45 times downwelling shortwave radiation, light gray shaded area is the middle 80% of predicted values, while dark shaded area is middle 50%.", fig.height = 4}
+ens_meteo %>% 
+  gather(var, value, Air_Temperature_celsius:Ten_Meter_Elevation_Wind_Speed_meterPerSecond,
+         Snowfall_millimeterPerHour) %>% 
+  filter(var == "Shortwave_Radiation_Downwelling_wattPerMeterSquared") %>% 
+  ggplot(aes(x = datetime, y = value * 0.45)) + 
+  # geom_line(aes(group = ens), size = 0.7, alpha = 0.7) + 
+  # stat_summary(fun.data = mean_se,geom = "ribbon", fill = "green3") + 
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)), geom = "ribbon", fill = "gray70") +
+  stat_summary(fun.data = qfun, geom = "ribbon", fill = "gray40") + 
+  stat_summary(fun.data = qfun, geom = "line", size = 1.2) + 
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "2 days"), 
+                   date_labels = "%m/%d") + 
+  labs(x = "Datetime (hours)", y = "PAR (Watts/m2)") + 
+  theme_bw(base_size = 14)
+```
+
+## Precipitation  
+
+```{r, fig.cap = "Precipitation, light gray shaded area is the middle 80% of predicted values, while dark shaded area is middle 50%.", fig.height = 4}
+ens_meteo %>% 
+  gather(var, value, Air_Temperature_celsius:Ten_Meter_Elevation_Wind_Speed_meterPerSecond,
+         Snowfall_millimeterPerHour) %>% 
+  filter(var == "Rainfall_millimeterPerHour") %>% 
+  ggplot(aes(x = datetime, y = value * 0.45)) + 
+  # geom_line(aes(group = ens), size = 0.7, alpha = 0.7) + 
+  # stat_summary(fun.data = mean_se,geom = "ribbon", fill = "green3") + 
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)), geom = "ribbon", fill = "gray70") +
+  stat_summary(fun.data = qfun, geom = "ribbon", fill = "gray40") + 
+  stat_summary(fun.data = qfun, geom = "line", size = 1.2) + 
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "2 days"), 
+                   date_labels = "%m/%d") + 
+  labs(x = "Datetime (hours)", y = "Precipitation (mm/hr)") + 
+  theme_bw(base_size = 14)
+```
+
+
+# Lake George water  
+
+## 1D Temperature  
+
+```{r}
+ltpath <- paste0("C:/Users/borre/Documents/lg-forecast/temp_forecasts/fc_", initial_fc_date, ".csv")
+laketemps <- data.table::fread(ltpath)
+```
+
+```{r, fig.cap = "Mean estimated water temperature profiles", fig.height = 7}
+laketemps %>% group_by(Var1, Var2, Var3) %>% 
+  summarize(value = mean(value)) %>% 
+  ggplot(aes(x = ymd_hms(Var2), y = -Var3, fill = value)) + 
+  geom_raster() + #scale_fill_continuous(limits = c(0,25)) + 
+  scale_y_reverse() + 
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "4 days"), 
+                   date_labels = "%m/%d") + 
+  facet_wrap(~Var1, ncol = 1) +
+  scale_fill_viridis_c(option = "B") + 
+  theme_bw(base_size = 14) + 
+  theme(strip.background = element_rect(fill = "white")) +
+  labs(x = "Datetime (hours)", y = "Depth (m)", fill = "°C")
+```
+
+
+## Thermocline 
+
+```{r, fig.cap = "Median overall estimated thermocline depth with uncertainty"}
+laketemps %>% group_by(Var1, Var2, ens) %>% 
+  summarize(thermo = thermo.depth(value, -Var3, seasonal = FALSE, Smin = 2)) %>% 
+  ggplot(aes(x = ymd_hms(Var2), y = thermo)) + 
+  stat_summary(fun.data = qfun, geom = "ribbon", fill = "firebrick4", alpha = 0.8) +
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)),
+               geom = "ribbon", fill = "firebrick3", alpha = 0.4) +
+  stat_summary(fun = median, geom = "line", size = 1.2) + 
+  #facet_wrap(~Var1, ncol = 1) + 
+  scale_y_reverse() + 
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "2 days"), 
+                   date_labels = "%m/%d") + 
+  theme_bw(base_size = 14) + 
+  labs(x = "Datetime (hours)", y = "Depth (m)")
+```
+
+
+
+```{r, fig.cap = "Estimated thermocline depth by model with uncertainty", fig.height = 8}
+laketemps %>% group_by(Var1, Var2, ens) %>% 
+  summarize(thermo = thermo.depth(value, -Var3, seasonal = FALSE, Smin = 2)) %>% 
+  ggplot(aes(x = ymd_hms(Var2), y = thermo)) + 
+  stat_summary(fun.data = qfun, geom = "ribbon", fill = "firebrick4", alpha = 0.8) +
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)),
+               geom = "ribbon", fill = "firebrick3", alpha = 0.4) +
+  #geom_point() + 
+  facet_wrap(~Var1, ncol = 1) + 
+  scale_y_reverse() + 
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "2 days"), 
+                   date_labels = "%m/%d") + 
+  theme_bw(base_size = 14) + 
+  labs(x = "Datetime (hours)", y = "Depth (m)")
+```
+
+\newpage
+
+## Comparison of previous forecast to observations
+
+```{r, eval = FALSE}
+
+strtdt <- Sys.Date() - 8
+enddt <- Sys.Date() -1
+jpvp_baseurl <- "http://jp-was.watson.ibm.com/AssemblyPoint/Data/DeepThunderAssimilationReport.csv?sid=43"
+strtend <- paste0("start=", stringr::str_replace_all(strtdt, "-", ""), "000000", "&end=", stringr::str_replace_all(enddt, "-", ""), "000000")
+filename <- paste0("fileName=JP_VP_006A_ALL-Variables_", strtdt, "_", enddt)
+
+obsvp <- read.csv(paste(jpvp_baseurl, strtend, filename, sep = "&"), skip = 10, na.strings = "-")
+
+wt <- obsvp %>% select(MM.dd.yyyy, HH.mm.ss, PC.RFU.Water.EXO..RFU., Chla.RFU.Water.EXO..RFU.,
+                       Temperature.Water.EXO..C., DO.Water.EXO..mg.L., RS232SensorDepth.Water.EXO..m.) 
+colnames(wt) <- c("date", "time", "pc_rfu", "chla_rfu", "temp_c", "do_mgL", "depth_m")
+
+obswt <- wt %>% mutate(datetime = mdy_hms(paste(date, time), tz = "UTC")) %>% 
+  mutate(datetime = floor_date(datetime, "1 hour"), depth_m = plyr::round_any(depth_m, 0.5)) %>% 
+  ggplot(aes(x = datetime, y = depth_m, fill = temp_c)) + geom_tile() + 
+  scale_fill_viridis_c(option = "B", limits = c(0, max(wt$temp_c, na.rm =TRUE))) + scale_y_reverse()
+
+meanpred <- laketemps %>% group_by(Var2, Var3) %>% 
+  summarize(value = median(value, na.rm = TRUE)) %>% 
+  filter(Var2 < enddt, Var2 > strtdt) %>% 
+  ggplot(aes(x = ymd_hms(Var2), y = -Var3, fill = value)) + 
+  geom_raster() + #scale_fill_continuous(limits = c(0,25)) + 
+  scale_y_reverse(limits = c(10.6, 0)) + 
+  scale_x_datetime(breaks = seq(ymd_hms(paste(initial_fc_date, "00:00:00")),
+                              ymd_hms(paste(initial_fc_date, "00:00:00"))+days(16), "4 days"), 
+                   date_labels = "%m/%d") + 
+  scale_fill_viridis_c(option = "B", limits = c(0, max(wt$temp_c, na.rm =TRUE))) + 
+  theme_bw(base_size = 14) + 
+  theme(strip.background = element_rect(fill = "white")) +
+  labs(x = "Datetime (hours)", y = "Depth (m)", fill = "°C")
+
+obswt / meanpred
+```
+
+
+```{r, eval = FALSE}
+wt2 <- wt %>% mutate(datetime = mdy_hms(paste(date, time), tz = "UTC")) %>% 
+  mutate(datetime = floor_date(datetime, "1 hour"), Var3 = -round(depth_m)) %>% 
+  filter(!is.na(temp_c)) %>% 
+  group_by(datetime, Var3) %>% summarize(temp_c = mean(temp_c))
+  
+#wt %>% mutate(Var2 = paste(date, time, sep = " "), Var3 = -round(depth_m))
+laketemps %>% left_join(wt2, by = c("Var2" = "datetime", "Var3")) %>% filter(!is.na(temp_c)) %>% 
+  ggplot(aes(x = temp_c, y = value)) + geom_point() + 
+  geom_abline(intercept = 0, slope = 1) +# facet_wrap(~Var1) + 
+  theme_bw() + 
+  labs(x = "Observed Temp (°C)", y = "Mean Temp Prediction (°C)")
+
+```
+
+
+\newpage
+
+## (BETA) Food web  
+
+> **NOTE: this section is still in development and should not be used for decision making**  
+
+
+### ATN: Allometric Trophic Network  
+
+A box model of Lake George to determine mean daily biomass of phytoplankton and zooplankton groups
+
+```{r}
+atn_out <- read.csv("C:/Users/borre/Documents/lg-forecast/ATN_out/output/atn_fc.csv")
+```
+
+
+```{r}
+atn_out %>% 
+  filter(Var2 %in% c("blue", "green", "red", "brown")) %>% 
+  ggplot(aes(x = Var1 + ymd("2022-04-20"), y = value, fill = Var2)) + 
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)), geom = "ribbon", alpha = 0.6) + 
+  stat_summary(fun = median, geom = "line", aes(color = Var2)) + 
+  scale_fill_manual(values = c("blue", "chocolate4", "green4", "salmon")) + 
+  scale_color_manual(values = c("blue", "chocolate4", "green4", "salmon")) + 
+  theme_bw() + guides(color = "none") + 
+  labs(x = "Date", y = "Biomass (ug/L)", fill = "Taxa")
+```
+
+
+```{r}
+atn_out %>% 
+  filter(Var2 %in% c("rot", "clad", "cal", "cyc")) %>% 
+  ggplot(aes(x = Var1 + ymd("2022-04-20"), y = value, fill = Var2)) + 
+  stat_summary(fun.data = qfun, fun.args = list(p = c(0.1, 0.9)), geom = "ribbon", alpha = 0.6) + 
+  stat_summary(fun = median, geom = "line", aes(color = Var2)) + 
+  scale_fill_viridis_d(option = "B", end = 0.8) + 
+  scale_color_viridis_d(option = "B", end = 0.8) + 
+  theme_bw() + guides(color = "none") + 
+  labs(x = "Date", y = "Biomass (ug/L)", fill = "Taxa")
+
+```
+
+\newpage
+
+### GLM: General Lake Model  
+
+A 1D biogeochemical model including nutrients, oxygen, and 3 phytoplankton and 1 zooplankton group
+
+```{r}
+chla <- read.csv("GLMAED/archive_fc/chla.csv")
+chla %>% mutate(DateTime = ymd_hms(DateTime)) %>%  
+  group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
+  ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
+  scale_fill_viridis_c() + scale_y_reverse() +
+  labs(title = "chla")
+```
+
+```{r}
+phs <- read.csv("GLMAED/archive_fc/phs.csv")
+phs %>% mutate(DateTime = ymd_hms(DateTime)) %>% 
+  group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
+  ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
+  scale_fill_viridis_c() + scale_y_reverse() +
+  labs(title = "phosphorus")
+```
+
+```{r}
+oxy <- read.csv("GLMAED/archive_fc/oxy.csv")
+oxy %>% mutate(DateTime = ymd_hms(DateTime)) %>% 
+  group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
+  ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
+  scale_fill_viridis_c() + scale_y_reverse() +
+  labs(title = "oxygen")
+```
+
+
+
+```{r}
+nit <- read.csv("GLMAED/archive_fc/nit.csv")
+nit %>% mutate(DateTime = ymd_hms(DateTime)) %>%  
+  group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
+  ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
+  scale_fill_viridis_c() + scale_y_reverse() +
+  labs(title = "nitrate")
+```
+
+### WET: Water Ecosystems Tool
+
+TBD
+
