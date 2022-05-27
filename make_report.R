@@ -33,7 +33,11 @@ cat(paste0(brk, "\n", brk, "\n", brk, "\n\n", "STARTING FORECAST RUN FOR ",
            Sys.Date(), "\n\n", brk, "\n", brk, "\n", brk))
 
 
+
 ## Get mean temperature from 2015-2019 for today for initial values
+## Not included in this repo yet 
+## SKIP TO LINE 87 to use default initial conditions
+
 ncdf <- '../AEDmodels/output/ensemble_output.nc'
 wtemp <- LakeEnsemblR::load_var(ncdf = ncdf, var = 'temp', return = 'list')
 
@@ -82,9 +86,9 @@ if(any(is.na(wto$temp_o))){
 
 
 ## RUNNING SIMULATIONS ####
-source(paste0(here::here(), "/get_noaa_gefs.R"))
-source(paste0(here::here(), "/GLMAED/lg-glm-run.R"))
-source(paste0(here::here(), "/ATN_out/lg-atn-run.R"))
+source(paste0(here::here(), "/lake_fc.R"))
+source(paste0(here::here(), "/GLMAED/run_glm-aed.R.R"))
+source(paste0(here::here(), "/ATN_out/run_ATN.R"))
 ###########################
 
 ## workaround to get the markdown to render when automating 
