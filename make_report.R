@@ -87,8 +87,8 @@ if(any(is.na(wto$temp_o))){
 
 ## RUNNING SIMULATIONS ####
 source(paste0(here::here(), "/lake_fc.R"))
-source(paste0(here::here(), "/GLMAED/run_glm-aed.R.R"))
-source(paste0(here::here(), "/ATN_out/run_ATN.R"))
+source(paste0(here::here(), "/GLMAED/run_glm-aed.R"))
+source(paste0(here::here(), "/ATN/run_ATN.R"))
 ###########################
 
 ## workaround to get the markdown to render when automating 
