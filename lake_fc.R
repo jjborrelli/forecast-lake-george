@@ -135,6 +135,10 @@ for(i in 1:length(olf)){
 laketemps <- data.table::rbindlist(laketemps)
 
 # SAVE LAKE TEMPERATURES
+if(!dir.exists(paste0(here::here(), "/temp_forecasts"))){
+  dir.create(paste0(here::here(), "/temp_forecasts"))
+}
+
 data.table::fwrite(laketemps, paste0(here::here(), "/temp_forecasts/fc_", initial_fc_date, ".csv"))
 
 
