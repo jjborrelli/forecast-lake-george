@@ -53,7 +53,7 @@ qfun <- function(x, p = c(0.25, 0.75)){
 ## Wind
 
 ```{r}
-metpath <- paste0("C:/Users/borre/Documents/lg-forecast/drivers/met_archive/meteo_fc_", 
+metpath <- paste0(here::here(), "/drivers/met_archive/meteo_fc_", 
                   initial_fc_date, ".csv")
 ens_meteo <- data.table::fread(metpath)
 ```
@@ -147,7 +147,7 @@ ens_meteo %>%
 ## 1D Temperature  
 
 ```{r}
-ltpath <- paste0("C:/Users/borre/Documents/lg-forecast/temp_forecasts/fc_", initial_fc_date, ".csv")
+ltpath <- paste0(here::here(), "/temp_forecasts/fc_", initial_fc_date, ".csv")
 laketemps <- data.table::fread(ltpath)
 ```
 
@@ -275,7 +275,7 @@ laketemps %>% left_join(wt2, by = c("Var2" = "datetime", "Var3")) %>% filter(!is
 A box model of Lake George to determine mean daily biomass of phytoplankton and zooplankton groups
 
 ```{r}
-atn_out <- read.csv("C:/Users/borre/Documents/lg-forecast/ATN_out/output/atn_fc.csv")
+atn_out <- read.csv(paste0(here::here(), "/ATN/output/atn_fc.csv"))
 ```
 
 
@@ -312,7 +312,7 @@ atn_out %>%
 A 1D biogeochemical model including nutrients, oxygen, and 3 phytoplankton and 1 zooplankton group
 
 ```{r}
-chla <- read.csv("GLMAED/archive_fc/chla.csv")
+chla <- read.csv(paste0(here::here(), "/GLMAED/archive_fc/chla.csv"))
 chla %>% mutate(DateTime = ymd_hms(DateTime)) %>%  
   group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
   ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
@@ -321,7 +321,7 @@ chla %>% mutate(DateTime = ymd_hms(DateTime)) %>%
 ```
 
 ```{r}
-phs <- read.csv("GLMAED/archive_fc/phs.csv")
+phs <- read.csv(paste0(here::here(), "/GLMAED/archive_fc/phs.csv"))
 phs %>% mutate(DateTime = ymd_hms(DateTime)) %>% 
   group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
   ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
@@ -330,7 +330,7 @@ phs %>% mutate(DateTime = ymd_hms(DateTime)) %>%
 ```
 
 ```{r}
-oxy <- read.csv("GLMAED/archive_fc/oxy.csv")
+oxy <- read.csv(paste0(here::here(), "/GLMAED/archive_fc/oxy.csv"))
 oxy %>% mutate(DateTime = ymd_hms(DateTime)) %>% 
   group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
   ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
@@ -341,7 +341,7 @@ oxy %>% mutate(DateTime = ymd_hms(DateTime)) %>%
 
 
 ```{r}
-nit <- read.csv("GLMAED/archive_fc/nit.csv")
+nit <- read.csv(paste0(here::here(), "/GLMAED/archive_fc/nit.csv"))
 nit %>% mutate(DateTime = ymd_hms(DateTime)) %>%  
   group_by(depth, DateTime) %>% summarize(value = median(value)) %>%
   ggplot(aes(x = DateTime, y = depth, fill = value)) + geom_raster(interpolate = TRUE) +
