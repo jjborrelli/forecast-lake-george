@@ -50,3 +50,6 @@ Simstrat/
 output/
 temp_forecasts/
 GLMAED/archive_fc/
+
+# files
+forecast_report.pdf
