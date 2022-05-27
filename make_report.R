@@ -98,6 +98,7 @@ Sys.setenv(RSTUDIO_PANDOC = "C:/Program Files/RStudio/bin/quarto/bin")
 rmarkdown::render(paste0(here::here(), "/forecast_report.Rmd"))
 
 ## SEND report via email
+## note: need to set mygmailID and mygmailPW as Sys.setenv variables
 bodytext <- paste("The Lake George Forecast report for", Sys.Date(), "is attached")
 email <- envelope() %>%
   from(Sys.getenv("mygmailID")) %>%
