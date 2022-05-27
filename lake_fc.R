@@ -68,6 +68,10 @@ ens_meteo <- do.call(rbind, df) %>%
   filter(ymd_hms(datetime) <= (ymd_hms(paste(initial_fc_date, "00:00:00"))+days(15)))
 
 # ARCHIVE MET PREDICTION DATA
+if(!dir.exists(paste0(here::here("drivers"), "/met_archive"))){
+  dir.create(paste0(here::here("drivers"), "/met_archive"))
+}
+
 metpredpath <- paste0(here::here("drivers"), "/met_archive/meteo_fc_", initial_fc_date, ".csv")
 data.table::fwrite(ens_meteo, metpredpath)
 
@@ -75,6 +79,10 @@ data.table::fwrite(ens_meteo, metpredpath)
 ens_sp <- split(ens_meteo, ens_meteo$ens)
 
 # SAVE EACH ENSEMBLE FOR LakeEnsemblR
+if(!dir.exists(paste0(here::here("drivers"), "/met_files"))){
+  dir.create(paste0(here::here("drivers"), "/met_files"))
+}
+
 for(i in 1:length(ens_sp)){
   write.csv(dplyr::select(ens_sp[[i]], -ens, -spechum),
             paste0(here::here("drivers"),"/met_files/LakeEnsemblr_meteo_gefs_ens", i, ".csv"),
@@ -83,7 +91,7 @@ for(i in 1:length(ens_sp)){
 
 
 # I know it is bad to setwd but it is the easiest way I could think of to make everything work when automating
-setwd("C:/Users/borre/Documents/lg-forecast")
+setwd(here::here())
 
 
 ler_yaml <- "LakeEnsemblR.yaml"
