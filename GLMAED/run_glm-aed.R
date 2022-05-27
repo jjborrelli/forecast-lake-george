@@ -76,6 +76,12 @@ for(i in 1:31){
   print(i)
 }
 
+
+if(!dir.exists(paste0(here::here("GLMAED"), "/archive_fc"))){
+  dir.create(paste0(here::here("GLMAED"), "/archive_fc"))
+}
+
+
 data.table::rbindlist(chllist) %>% 
   write.csv("GLMAED/archive_fc/chla.csv", row.names = FALSE)
 # group_by(depth, DateTime) %>% summarize(value = median(value)) %>% 
