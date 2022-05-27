@@ -190,5 +190,11 @@ for(j in 1:30){
 t2 <- Sys.time()
 t2-t1
 
-write.csv(data.table::rbindlist(atnOUT), "ATN_out/output/atn_fc.csv")
+
+if(!dir.exists(paste0(here::here("ATN"), "/output"))){
+  dir.create(paste0(here::here("ATN"), "/output"))
+}
+
+
+write.csv(data.table::rbindlist(atnOUT), paste0(here::here("ATN"), "/output", "/atn_fc.csv"))
 
